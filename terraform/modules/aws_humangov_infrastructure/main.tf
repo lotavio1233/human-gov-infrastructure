@@ -36,11 +36,25 @@ resource "aws_security_group" "state_ec2_sg" {
 }
 
 resource "aws_instance" "state_ec2" {
-  ami           = "ami-0fff1b9a61dec8a5f"
+  ami           = "ami-0866a3c8686eaeeba"
   instance_type = "t2.micro"
   key_name = "humangov-ec2-key"
   vpc_security_group_ids = [aws_security_group.state_ec2_sg.id]
 iam_instance_profile = aws_iam_instance_profile.s3_dynamodb_full_access_instance_profile.name
+  
+   provisioner "local-exec" {
+	  command = "sleep 30; ssh-keyscan ${self.private_ip} >> ~/.ssh/known_hosts"
+	}
+	
+	provisioner "local-exec" {
+	  command = "echo ${var.state_name} id=${self.id} ansible_host=${self.private_ip} ansible_user=ubuntu us_state=${var.state_name} aws_region=${var.region} aws_s3_bucket=${aws_s3_bucket.state_s3.bucket} aws_dynamodb_table=${aws_dynamodb_table.state_dynamodb.name} >> /etc/ansible/hosts"
+	}
+	
+	provisioner "local-exec" {
+	  command = "sed -i '/${self.id}/d' /etc/ansible/hosts"
+	  when = destroy
+	}
+  
   tags = {
     Name = "humangov-${var.state_name}"
   }
