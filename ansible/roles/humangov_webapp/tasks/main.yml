@@ -5,7 +5,7 @@
     update_cache: yes
   become: yes
   
-  - name: Install required packages
+- name: Install required packages
   apt:
     name:
       - nginx
